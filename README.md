@@ -19,6 +19,8 @@ https://developer.hashicorp.com/terraform/cli/commands/destroy
 `terraform apply -destory`
 `terraform plan -destroy`
 
+https://learn.microsoft.com/en-us/azure/container-instances/container-instances-quickstart-terraform
+
 
 
 
