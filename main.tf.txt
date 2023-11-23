@@ -14,7 +14,6 @@ provider "azurerm" {
 
 }
 
-# Resource Group
 resource "azurerm_resource_group" "my-rg" {
   name     = "azure-rg"
   location = "East Us"
@@ -23,12 +22,73 @@ resource "azurerm_resource_group" "my-rg" {
   }
 }
 
-# Virtual Network
 resource "azurerm_virtual_network" "my-vnet" {
   name                = "azure-vnet"
   resource_group_name = azurerm_resource_group.my-rg.name
   location            = azurerm_resource_group.my-rg.location
   address_space       = ["10.123.0.0/16"]
+
+  tags = {
+    environment = "dev"
+  }
+}
+
+resource "azurerm_subnet" "my-subnet" {
+  name                 = "azure-subnet"
+  resource_group_name  = azurerm_resource_group.my-rg.name
+  virtual_network_name = azurerm_virtual_network.my-vnet.name
+  address_prefixes     = ["10.123.1.0/24"]
+}
+
+
+resource "azurerm_network_security_group" "my-nsg" {
+  name                = "azure-nsg"
+  location            = azurerm_resource_group.my-rg.location
+  resource_group_name = azurerm_resource_group.my-rg.name
+
+  tags = {
+    environment = "dev"
+  }
+}
+
+resource "azurerm_network_security_rule" "my-nsg-rule" {
+  name                        = "azure-nsg-rule"
+  priority                    = 100
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "*"
+  source_port_range           = "*"
+  destination_port_range      = "*"
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.my-rg.name
+  network_security_group_name = azurerm_network_security_group.my-nsg.name
+}
+resource "azurerm_subnet_network_security_group_association" "my-nsg-association" {
+  subnet_id                 = azurerm_subnet.my-subnet.id
+  network_security_group_id = azurerm_network_security_group.my-nsg.id
+}
+resource "azurerm_public_ip" "my-pip" {
+  name                = "azure-pip"
+  location            = azurerm_resource_group.my-rg.location
+  resource_group_name = azurerm_resource_group.my-rg.name
+  allocation_method   = "Dynamic"
+
+  tags = {
+    environment = "dev"
+  }
+}
+resource "azurerm_network_interface" "my-nic" {
+  name                = "azure-nic"
+  location            = azurerm_resource_group.my-rg.location
+  resource_group_name = azurerm_resource_group.my-rg.name
+
+  ip_configuration {
+    name                          = "azure-nic-configuration"
+    subnet_id                     = azurerm_subnet.my-subnet.id
+    private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.my-pip.id
+  }
 
   tags = {
     environment = "dev"
